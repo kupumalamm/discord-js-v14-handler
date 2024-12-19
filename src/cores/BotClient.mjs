@@ -251,7 +251,6 @@ export class BotClient extends Client {
     return true;
   }
 
-
   async loadContextMenu(path = "/src/contextmenu/") {
     try {
       const paths = await walks(`${process.cwd()}${path}`);
