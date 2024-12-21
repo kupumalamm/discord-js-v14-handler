@@ -241,6 +241,7 @@ export class BotClient extends Client {
           command.mention = `<${command.slashCommandKey}:${command.commandId}>`;
 
           this.logger.debug(`✅ Slash Command Loaded: /${command.name}`);
+          // 1
           this.commands.set(`slashcmd_${command.name}`, command);
           this.allCommands.push(Slash.toJSON());
         }
@@ -387,72 +388,6 @@ export class BotClient extends Client {
         this.logger.info(`SLASH-CMDS | Set ${this.commands.size} slashCommands!`);
       })
       .catch(this.logger.error);
-  }
-
-  async reloadCommand(commandName, path = "/src/commands") {
-    try {
-      const dirs = await promises.readdir(`${process.cwd()}${path}`);
-
-      for (const dir of dirs) {
-        const dirPath = `${process.cwd()}${path}/${dir}`;
-        const stats = await promises.lstat(dirPath);
-
-        if (stats.isDirectory()) {
-          const subDirs = await promises.readdir(dirPath);
-
-          for (const subDir of subDirs) {
-            const subDirPath = `${dirPath}/${subDir}`;
-            const subDirStats = await promises.lstat(subDirPath);
-
-            if (subDirStats.isDirectory()) {
-              const subSlash = new SlashCommandBuilder()
-                .setName(dir.toLowerCase())
-                .setDescription(`Commands dalam kategori ${dir}`);
-
-              const groupCommands = await promises.readdir(subDirPath);
-
-              for (const file of groupCommands) {
-                const filePath = `${subDirPath}/${file}`;
-                await this.loadSingleCommand(
-                  filePath,
-                  subSlash,
-                  "groupcmd",
-                  dir,
-                  subDir,
-                );
-              }
-
-              if (subSlash.toJSON().name === commandName) {
-                this.commands.set(commandName, subSlash);
-                this.reloadCommandCache.set(commandName, subDirPath);
-                this.logger.info(`✅ Group command reloaded: ${commandName}`);
-                return;
-              }
-            } else if (subDir.endsWith(".mjs")) {
-              const command = await this.importCommand(subDirPath);
-              if (command?.name === commandName) {
-                this.commands.set(command.name, command);
-                this.reloadCommandCache.set(commandName, subDirPath);
-                this.logger.info(`✅ Subcommand reloaded: ${commandName}`);
-                return;
-              }
-            }
-          }
-        } else if (dir.endsWith(".mjs")) {
-          const command = await this.importCommand(dirPath);
-          if (command?.name === commandName) {
-            this.commands.set(command.name, command);
-            this.reloadCommandCache.set(commandName, dirPath);
-            this.logger.info(`✅ Command reloaded: ${commandName}`);
-            return;
-          }
-        }
-      }
-
-      throw new Error(`Command "${commandName}" not found`);
-    } catch (e) {
-      this.logger.error(`❌ Error reloading command "${commandName}": ${e.message}`);
-    }
   }
 
   async importCommand(filePath) {

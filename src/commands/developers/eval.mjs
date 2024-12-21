@@ -57,7 +57,7 @@ export default {
         });
       }
     } catch (error) {
-      client.logget.error(error);
+      client.logger.error(error);
       await interaction.reply({
         content: `❌ **Error:**\n\`\`\`js\n${error.stack}\n\`\`\``,
         ephemeral: true,

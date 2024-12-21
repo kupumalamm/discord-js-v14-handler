@@ -17,11 +17,11 @@ export class Paginator {
    * @param {Array<{content: string, embeds: import('discord.js').Embed[]} | string>} pages Array of pages to display.
    * @param {{ephemeral?: boolean, timeout?: number}} options Options for pagination.
    */
-  async paginate(interaction, pages, options = {}) {
+  async paginate(interaction, pages = [], options = {}) {
     const { ephemeral = false, timeout = 60000 } = options;
 
-    if (!pages || !pages.length) {
-      throw new Error("Pages array cannot be empty.");
+    if (!Array.isArray(pages) || pages.length === 0) {
+      throw new Error("Pages array cannot be empty and must be an array.");
     }
 
     let currentPage = 0;
@@ -34,35 +34,35 @@ export class Paginator {
     const createButtons = (disabled = false) => {
       const buttons = [
         new ButtonBuilder()
-          .setCustomId('1')
-          .setEmoji('◀️')
+          .setCustomId("prev")
+          .setEmoji("◀️")
+          .setStyle(ButtonStyle.Secondary)
+          .setDisabled(disabled || currentPage === 0),
+        new ButtonBuilder()
+          .setCustomId("home")
+          .setEmoji("🏠")
           .setStyle(ButtonStyle.Secondary)
           .setDisabled(disabled),
         new ButtonBuilder()
-          .setCustomId('2')
-          .setEmoji('🏠')
+          .setCustomId("next")
+          .setEmoji("▶️")
           .setStyle(ButtonStyle.Secondary)
-          .setDisabled(disabled),
+          .setDisabled(disabled || currentPage === pages.length - 1),
         new ButtonBuilder()
-          .setCustomId('3')
-          .setEmoji('▶️')
+          .setCustomId("goto")
           .setStyle(ButtonStyle.Secondary)
-          .setDisabled(disabled),
+          .setDisabled(disabled || pages.length <= 4),
         new ButtonBuilder()
-          .setCustomId('4')
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(disabled || pages.length <= 5),
-        new ButtonBuilder()
-          .setCustomId('5')
-          .setEmoji('⏹')
+          .setCustomId("stop")
+          .setEmoji("⏹")
           .setStyle(ButtonStyle.Secondary)
           .setDisabled(disabled),
       ];
 
-      if (pages.length > 5) {
-        buttons[3].setEmoji('🔢');
+      if (pages.length > 4) {
+        buttons[3].setEmoji("🔢");
       } else {
-        buttons[3].setLabel("");
+        buttons[3].setLabel("\u200b");
       }
 
       return new ActionRowBuilder().addComponents(buttons);
@@ -81,7 +81,7 @@ export class Paginator {
       if (pageContent.embeds || pageContent.content) {
         return {
           content: pageContent.content || null,
-          embeds: pageContent.embeds || []
+          embeds: pageContent.embeds || [],
         };
       }
       throw new Error("Each page must be either a string or an object containing 'content' and/or 'embeds'.");
@@ -100,31 +100,34 @@ export class Paginator {
       time: timeout,
     });
 
-    collector.on('collect', async (buttonInteraction) => {
+    collector.on("collect", async (buttonInteraction) => {
       switch (buttonInteraction.customId) {
-        case '1':
-          currentPage = currentPage > 0 ? currentPage - 1 : 0;
+        case "prev":
+          currentPage = Math.max(currentPage - 1, 0);
           break;
-        case '2':
+        case "home":
           currentPage = 0;
           break;
-        case '3':
-          currentPage = currentPage < pages.length - 1 ? currentPage + 1 : pages.length - 1;
+        case "next":
+          currentPage = Math.min(currentPage + 1, pages.length - 1);
           break;
-        case '4': {
-          if (pages.length <= 5) {
-            await buttonInteraction.reply({ content: "Go to Page is disabled for less than 6 pages.", ephemeral: true });
+        case "goto": {
+          if (pages.length <= 4) {
+            await buttonInteraction.reply({
+              content: "Go to page is disabled for less than 5 pages.",
+              ephemeral: true,
+            });
             return;
           }
 
           const modal = new ModalBuilder()
-            .setCustomId('6')
-            .setTitle('Go to Page')
+            .setCustomId("goto-modal")
+            .setTitle("Go to Page")
             .addComponents(
               new ActionRowBuilder().addComponents(
                 new TextInputBuilder()
-                  .setCustomId('7')
-                  .setLabel('Page Number')
+                  .setCustomId("page-number")
+                  .setLabel("Page Number")
                   .setStyle(TextInputStyle.Short)
                   .setPlaceholder(`1 - ${pages.length}`)
                   .setRequired(true)
@@ -133,29 +136,33 @@ export class Paginator {
 
           await buttonInteraction.showModal(modal);
 
-          const modalSubmit = await interaction.awaitModalSubmit({
-            filter: (modalInteraction) => modalInteraction.customId === '6',
-            time: timeout,
-          });
+          try {
+            const modalSubmit = await buttonInteraction.awaitModalSubmit({
+              filter: (modalInteraction) => modalInteraction.customId === "goto-modal",
+              time: timeout,
+            });
 
-          const pageNumber = parseInt(modalSubmit.fields.getTextInputValue('7'), 10);
-          if (pageNumber && pageNumber >= 1 && pageNumber <= pages.length) {
-            currentPage = pageNumber - 1;
-            const newPage = getPageContent(currentPage);
-            await modalSubmit.update({
-              content: newPage.content,
-              embeds: newPage.embeds,
-              components: [createButtons()],
-            });
-          } else {
-            await modalSubmit.reply({
-              content: `Invalid page number. Please choose a number between 1 and ${pages.length}.`,
-              ephemeral: true,
-            });
+            const pageNumber = parseInt(modalSubmit.fields.getTextInputValue("page-number"), 10);
+            if (pageNumber && pageNumber >= 1 && pageNumber <= pages.length) {
+              currentPage = pageNumber - 1;
+              const newPage = getPageContent(currentPage);
+              await modalSubmit.update({
+                content: newPage.content,
+                embeds: newPage.embeds,
+                components: [createButtons()],
+              });
+            } else {
+              await modalSubmit.reply({
+                content: `Invalid page number. Please choose a number between 1 and ${pages.length}.`,
+                ephemeral: true,
+              });
+            }
+          } catch {
+            /* */
           }
           return;
         }
-        case '5':
+        case "stop":
           collector.stop();
           await buttonInteraction.update({
             components: [createButtons(true)],
@@ -171,7 +178,7 @@ export class Paginator {
       });
     });
 
-    collector.on('end', () => {
+    collector.on("end", () => {
       if (!message.editable) return;
       message.edit({
         components: [createButtons(true)],

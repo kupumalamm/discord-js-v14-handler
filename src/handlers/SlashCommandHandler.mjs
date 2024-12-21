@@ -18,7 +18,13 @@ export async function slashCommandHandler(client, interaction) {
   if (!client.utils.perms.checkPerms(interaction.channel, [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel])) {
     return interaction.reply({
       ephemeral: true,
-      content: `I can't view this channel, or I can't send messages in this channel`
+      embeds: [
+        client.embed.create({
+          title: "Permission Error",
+          description: ">>> I can't view or send messages in this channel.",
+          type: "error",
+        }),
+      ],
     });
   }
 
@@ -27,7 +33,13 @@ export async function slashCommandHandler(client, interaction) {
   if (!client.utils.perms.checkPerms(interaction.channel, [PermissionFlagsBits.EmbedLinks])) {
     return interaction.reply({
       ephemeral: true,
-      content: `I need the Permission, to Embed-Links in this Channel`
+      embeds: [
+        client.embed.create({
+          title: "Permission Error",
+          description: ">>> I need permission to embed links in this channel.",
+          type: "error",
+        }),
+      ],
     });
   }
 
@@ -39,11 +51,17 @@ export async function slashCommandHandler(client, interaction) {
     } catch (e) {
       client.logger.error(e);
       const content = `**Something went wrong while executing \`${slashCmd?.name || "???"}\`:**\`\`\`\n${String(e?.message ?? e).substring(0, 500)}\n\`\`\``.substring(0, 1000);
+      const errorEmbed = client.embed.create({
+        title: "Execution Error",
+        description: `>>> ${content}`,
+        type: "error",
+      });
+
       if (interaction.replied) {
-        interaction.channel.send({ content }).catch(() => null);
+        interaction.channel.send({ embeds: [errorEmbed] }).catch(() => null);
       } else {
-        interaction.reply({ content, ephemeral: true }).catch(() => {
-          interaction.channel.send({ content }).catch(() => null);
+        interaction.reply({ embeds: [errorEmbed], ephemeral: true }).catch(() => {
+          interaction.channel.send({ embeds: [errorEmbed] }).catch(() => null);
         });
       }
     }
@@ -80,16 +98,14 @@ export async function checkCommand(client, command, ctx, ...extras) {
   const { dontCheckCooldown } = extras?.[0] || {};
 
   if (command.guildOnly && !ctx.guild) {
-    return await ctx.reply({
-      ephemeral: true,
-      embeds: [
-        client.embed.create({
-          title: "Guilds Only",
-          description: ">>> You can use this Command only in a Guilds",
-          type: "error"
-        }),
-      ]
-    }).catch(() => null), false;
+    const embed = client.embed.create({
+      title: "Guilds Only",
+      description: ">>> You can use this command only in a guild.",
+      type: "error",
+    });
+
+    await ctx.reply({ ephemeral: true, embeds: [embed] }).catch(() => null);
+    return false;
   }
 
   if (command.mustPermissions?.length) {
@@ -98,16 +114,13 @@ export async function checkCommand(client, command, ctx, ...extras) {
       !ctx?.member?.permissions?.has?.(PermissionFlagsBits.Administrator) &&
       command.mustPermissions.some(x => !ctx?.member?.permissions?.has?.(x))
     ) {
-      await ctx.reply({
-        ephemeral: true,
-        embeds: [
-          client.embed.create({
-            title: "You need __all__ of these permissions:",
-            description: `>>> ${new PermissionsBitField(command.mustPermissions).toArray().map(x => `\`${x}\``).join(", ")}`,
-            type: "error",
-          }),
-        ],
-      }).catch(() => null);
+      const embed = client.embed.create({
+        title: "Missing Permissions",
+        description: `>>> You need the following permissions: ${new PermissionsBitField(command.mustPermissions).toArray().map(x => `\`${x}\``).join(", ")}`,
+        type: "error",
+      });
+
+      await ctx.reply({ ephemeral: true, embeds: [embed] }).catch(() => null);
       return false;
     }
   }
@@ -118,16 +131,13 @@ export async function checkCommand(client, command, ctx, ...extras) {
       !ctx?.member?.permissions?.has?.(PermissionFlagsBits.Administrator) &&
       !command.allowedPermissions.some(x => ctx?.member?.permissions?.has?.(x))
     ) {
-      await ctx.reply({
-        ephemeral: true,
-        embeds: [
-          client.embed.create({
-            title: "You need __at least one__ of these permissions:",
-            description: `>>> ${new PermissionsBitField(command.allowedPermissions).toArray().map(x => `\`${x}\``).join(", ")}`,
-            type: "error",
-          }),
-        ],
-      }).catch(() => null);
+      const embed = client.embed.create({
+        title: "Missing Permissions",
+        description: `>>> You need at least one of these permissions: ${new PermissionsBitField(command.allowedPermissions).toArray().map(x => `\`${x}\``).join(", ")}`,
+        type: "error",
+      });
+
+      await ctx.reply({ ephemeral: true, embeds: [embed] }).catch(() => null);
       return false;
     }
   }
@@ -136,16 +146,13 @@ export async function checkCommand(client, command, ctx, ...extras) {
 
   const developers = client.config.developers;
   if (command.developerOnly && !developers.includes(ctx.user.id)) {
-    await ctx.reply({
-      ephemeral: true,
-      embeds: [
-        client.embed.create({
-          title: "This command is __developer only__!",
-          description: `>>> Only bot developers can use this command.`,
-          type: "error",
-        }),
-      ],
-    }).catch(() => null);
+    const embed = client.embed.create({
+      title: "Developer Only Command",
+      description: ">>> Only bot developers can use this command.",
+      type: "error",
+    });
+
+    await ctx.reply({ ephemeral: true, embeds: [embed] }).catch(() => null);
     return false;
   }
 
@@ -176,16 +183,13 @@ export function isOnCooldown(client, command, ctx) {
     const userCooldowns = client.cooldowns.user.get(userId);
     const commandCooldown = userCooldowns.get(command.name) || 0;
     if (commandCooldown > Date.now()) {
-      ctx.reply({
-        ephemeral: true,
-        embeds: [
-          client.embed.create({
-            title: "Slow down!",
-            description: `>>> You can use this command again in \`${client.utils.time.onlySecondDuration(commandCooldown - Date.now())}\`.`,
-            type: "warning",
-          }),
-        ],
-      }).catch(() => null);
+      const embed = client.embed.create({
+        title: "Slow Down!",
+        description: `>>> You can use this command again in \`${client.utils.time.onlySecondDuration(commandCooldown - Date.now())}\`.`,
+        type: "warning",
+      });
+
+      ctx.reply({ ephemeral: true, embeds: [embed] }).catch(() => null);
       return true;
     }
     userCooldowns.set(command.name, Date.now() + (command.cooldown?.user || 0));
@@ -196,16 +200,13 @@ export function isOnCooldown(client, command, ctx) {
     const guildCooldowns = client.cooldowns.guild.get(guildId);
     const commandCooldown = guildCooldowns.get(command.name) || 0;
     if (commandCooldown > Date.now()) {
-      ctx.reply({
-        ephemeral: true,
-        embeds: [
-          client.embed.create({
-            title: "Slow down!",
-            description: `>>> This guild can use this command again in \`${client.utils.time.onlySecondDuration(commandCooldown - Date.now())}\`.`,
-            type: "warning",
-          }),
-        ],
-      }).catch(() => null);
+      const embed = client.embed.create({
+        title: "Slow Down!",
+        description: `>>> This guild can use this command again in \`${client.utils.time.onlySecondDuration(commandCooldown - Date.now())}\`.`,
+        type: "warning",
+      });
+
+      ctx.reply({ ephemeral: true, embeds: [embed] }).catch(() => null);
       return true;
     }
     guildCooldowns.set(command.name, Date.now() + (command.cooldown?.guild ?? defaultCooldown));
@@ -216,16 +217,13 @@ export function isOnCooldown(client, command, ctx) {
   const allCooldowns = [...globalCooldowns, Date.now()].filter(x => (Date.now() - x) <= maximumCoolDownCommands.time);
   client.cooldowns.global.set(userId, allCooldowns);
   if (allCooldowns.length > maximumCoolDownCommands.amount) {
-    ctx.reply({
-      ephemeral: true,
-      embeds: [
-        client.embed.create({
-          title: "Slow down!",
-          description: `>>> You can only use ${maximumCoolDownCommands.amount} commands per ${maximumCoolDownCommands.time / 1000} seconds.`,
-          type: "warning",
-        }),
-      ],
-    }).catch(() => null);
+    const embed = client.embed.create({
+      title: "Slow Down!",
+      description: `>>> You can only use ${maximumCoolDownCommands.amount} commands per ${maximumCoolDownCommands.time / 1000} seconds.`,
+      type: "warning",
+    });
+
+    ctx.reply({ ephemeral: true, embeds: [embed] }).catch(() => null);
     return true;
   }
 
