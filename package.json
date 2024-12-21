@@ -2,7 +2,7 @@
   "main": "./src/index.mjs",
   "type": "module",
   "name": "discord-js-handler",
-  "description": "Discord.js v14.x Command Handler",
+  "description": "A powerful, flexible, and scalable command handler for Discord bots built with Discord.js V14 and modern JavaScript (ESM).",
   "version": "1.0.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Tomato6966/discord-js-v14-handler.git"
+    "url": "git+https://github.com/kupumalamm/discord-js-v14-handler.git"
   },
   "keywords": [
     "Discord",
@@ -20,12 +20,12 @@
     "handler",
     "v14"
   ],
-  "author": "Tomato6966",
+  "author": "kupumalamm",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Tomato6966/discord-js-v14-handler/issues"
+    "url": "https://github.com/kupumalamm/discord-js-v14-handler/issues"
   },
-  "homepage": "https://github.com/Tomato6966/discord-js-v14-handler#readme",
+  "homepage": "https://github.com/kupumalamm/discord-js-v14-handler#readme",
   "dependencies": {
     "discord-hybrid-sharding": "github:meister03/discord-hybrid-sharding",
     "discord.js": "^14.16.3",
