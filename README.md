@@ -1,134 +1,145 @@
----
-
 # **Discord.js Base Command Handler**
 
-### **Written by Tomato6966**  
-Built for [Deezcord](https://github.com/Tomato6966/deezcord-music-bot).
-
-This project provides a powerful and flexible **command handler** for Discord bots using `Discord.js V14` and modern JavaScript (ESM). It supports **Slash Commands**, **Sub-Slash Commands**, **Group-Sub-Slash Commands**, **Context Menus**, and more, making bot development simpler and more efficient.
+This repository offers a flexible **command handler** for building Discord bots using `Discord.js v14` and modern JavaScript (ESM). It provides support for **Slash Commands**, **Sub-Slash Commands**, **Group-Sub-Slash Commands**, **Context Menus**, and more, streamlining bot development.
 
 ---
 
 ## **Features**
 
-✔ **Slash Commands**  
-- Manage and register **slash commands**, which users can invoke with `/`.
+- **Slash Commands**  
+  Efficiently manage and register slash commands that users can invoke using `/`.
 
-✔ **Sub-Slash Commands**  
-- Group commands under a parent command for a **structured user experience**, e.g., `/info ping`.
+- **Sub-Slash Commands**  
+  Structure your commands hierarchically, e.g., `/info ping`, for a more organized user experience.
 
-✔ **Group-Sub-Slash Commands**  
-- Create **hierarchical command structures** like `/info bot info` for advanced functionality.
+- **Group-Sub-Slash Commands**  
+  Create advanced command structures, e.g., `/info bot info`, for specialized functionalities.
 
-✔ **Context Menus**  
-- Add right-click interactions to **users and messages**, such as "Report Message" or "User Info."
+- **Context Menus**  
+  Enable right-click interactions for **users** and **messages**, such as "Report Message" or "User Info."
 
-✔ **Extends `discord.js`**  
-- Improved type definitions for **better error handling** and **IDE code completion**.
+- **`discord.js` Extension**  
+  Enhance your bot's type definitions, improving error handling and code completion in your IDE.
 
-✔ **Sharding**  
-- Built-in **sharding support** using [discord-hybrid-sharding](https://npmjs.com/discord-hybrid-sharding). Ideal for scaling across large servers.
+- **Sharding Support**  
+  Scale your bot seamlessly across multiple shards using [discord-hybrid-sharding](https://npmjs.com/discord-hybrid-sharding).
 
-✔ **JSDoc Types**  
-- Type definitions through **JSDoc comments** enhance code readability and provide in-editor documentation.
+- **JSDoc Integration**  
+  In-editor documentation through **JSDoc comments** to increase readability and developer productivity.
 
-✔ **Color-Coded Logger**  
-- A customizable logger with:  
-  - **Color-coded messages** for clarity.  
-  - **Log levels** to control verbosity.  
-  - Optional timestamps and prefixes.
+- **Color-Coded Logger**  
+  Customizable logger with color-coded messages, log levels, optional timestamps, and prefixes.
 
-✔ **Webhook Logging**  
-- Send logs to a **Discord channel** via webhooks for real-time monitoring.
+- **Webhook Logging**  
+  Send logs directly to a **Discord channel** via webhooks for real-time monitoring.
 
-✔ **MongoDB Integration**  
-- Supports **MongoDB** for persistent data storage, perfect for saving user data or configurations.
+- **MongoDB Support**  
+  Persistent data storage using **MongoDB**, perfect for saving configurations and user data.
 
-✔ **Slash Command Mentions Cache**  
-- Efficient caching ensures **faster responses** and optimized API usage.
+- **Slash Command Caching**  
+  Enhanced caching for slash command mentions, optimizing performance and reducing API calls.
 
-✔ **Modern ESM Style**  
-- Fully written in **ESM** with `.mjs` extensions for modern JavaScript compatibility.
+- **Modern ESM Syntax**  
+  Fully written in **ESM** with `.mjs` extensions for compatibility with modern JavaScript practices.
 
 ---
 
 ## **Folder Structure**
 
-The bot's command system is organized for scalability and clarity. Each type of command is categorized logically.
+The command structure is logically organized to promote scalability and ease of maintenance.
 
 ```
 /src/commands/
-├── Help.mjs           # Main Slash Command
+├── Info.mjs           # Main Slash Command
 ├── Info/
 │   ├── Ping.mjs       # Sub-Slash Command for /info ping
 │   └── Bot/
 │       └── Info.mjs   # Group-Sub-Slash Command for /info bot info
 ```
 
-### **Explanation**:
+### **Command Breakdown**:
 
 - **Main Slash Commands**:  
-  - Top-level commands, e.g., `/help`.  
-  - Defined directly in `/src/commands/`.  
+  Top-level commands, e.g., `/help`, defined directly in `/src/commands/`.
 
 - **Sub-Slash Commands**:  
-  - Commands nested under a main command, e.g., `/info ping`.  
-  - Stored in folders like `/src/commands/Info/`.  
+  Nested under a parent command, e.g., `/info ping`, stored in subdirectories like `/src/commands/Info/`.
 
 - **Group-Sub-Slash Commands**:  
-  - Advanced nested commands for complex structures, e.g., `/info bot info`.  
-  - Located in deeper nested folders, e.g., `/src/commands/Info/Bot/`.
+  Complex command structures, e.g., `/info bot info`, located deeper in nested folders like `/src/commands/Info/Bot/`.
 
 ### **Benefits**:
-- **Organized**: Commands are neatly categorized into folders.  
-- **Scalable**: Easily add new commands or groups without cluttering.  
-- **Maintainable**: Each command resides in its own file for easy debugging.
+- **Organized**: Commands are grouped by type and purpose, making them easy to find.
+- **Scalable**: Easily add more commands or groups without cluttering the project.
+- **Maintainable**: Each command is self-contained, simplifying debugging and updates.
+
+---
+
+## **Slash Command Limitations**
+
+Discord enforces the following limits on command registration:
+
+- **Main Slash Commands**: A bot can register up to **100 main commands**.
+- **Sub-Slash Commands**: Each main command can have up to **25 subcommands**.
+- **Group-Sub-Slash Commands**: Each subcommand can have up to **25 group-subcommands**.
+
+It’s essential to keep these limits in mind when designing your bot’s command structure.
 
 ---
 
 ## **Configuration**
 
-The bot uses a `.env` file to manage its settings, such as tokens, database connections, and logging preferences. Rename `example.env` to `.env`.
+The bot uses a `.env` file to manage sensitive information like tokens, database URIs, and logging configurations. Alternatively, configurations can be set in the [Config.mjs](src/data/Config.mjs) file, though `.env` is preferred for security reasons. Rename `example.env` to `.env` for proper setup.
+
+**Modified by kupumalamm** for additional custom configuration options.
 
 ### **.env Example**
 
 ```env
-# Discord Bot Token for authentication
+# Discord Bot Token
 DISCORD_TOKEN=""
 
-# Client ID of the Discord bot (usually the application or bot's ID)
+# Discord Client ID
 CLIENT_I=""
 
-# URI for MongoDB connection (database connection)
+# MongoDB Connection URI
 MONGODB_URI=""
 
-# Total number of shards used by the bot
+# Number of Shards (use "auto" for auto-scaling)
 TOTAL_SHARDS="auto"
 
-# Number of shards per cluster
+# Shard Distribution per Cluster
 SHARDS_PER_CLUSTER=4
 
-# Sharding mode: "process" or "worker"
+# Sharding Mode: "process" or "worker"
 SHARDING_MODE="process"
 
-# Log level for logging: 0 (all logs), 1 (no debug logs), 2 (no debug or info logs), etc.
+# Log Level: 0 (all logs), 1 (no debug logs), etc.
 LOG_LEVEL=0
 
-# Prefix used in the log messages
+# Log Prefix
 LOG_PREFIX="INFO-LOG"
 
-# Determines whether to include timestamps in the logs
+# Log Timestamps (true/false)
 LOG_TIMESTAMP="true"
 
-# Discord Webhook URL for sending logs
+# Webhook URL for Logging
 LOG_WEBHOOK=""
 
-# Determines whether slash commands will be publicly available
+# Whether Slash Commands are publicly available
 PUBLIC_SLASH="true"
 
-# If you want to limit slash commands to a specific guild, enter the guild ID here
+# If limiting Slash Commands to specific guilds, enter the guild ID
 DEV_GUILD=""
 ```
+
+---
+
+## **Requirements & Dependencies**  
+
+- **Node.js v18 or higher**
+- **npm** or **yarn** for package management
+- **MongoDB** (for database integration)
 
 ---
 
@@ -136,7 +147,7 @@ DEV_GUILD=""
 
 ### **1. Clone the Repository**
 ```bash
-git clone https://github.com/Tomato6966/discord-js-v14-handler.git
+git clone https://github.com/kupumalamm/discord-js-v14-handler.git
 cd discord-js-v14-handler
 ```
 
@@ -147,23 +158,23 @@ npm install
 
 ### **3. Configure Environment**
 - Create a `.env` file in the root directory.  
-- Add your bot token, database URI, and other settings (see `.env Example` above).
+- Add your bot token, database URI, and other necessary configurations (refer to `.env Example`).
 
 ### **4. Run the Bot**
-- Start the bot using Node.js:
-  ```bash
-  node src/index.mjs
-  ```
-  Or use the included npm script:
-  ```bash
-  npm run start
-  ```
+To start the bot with Node.js:
+```bash
+node src/index.mjs
+```
+Or use the included npm script:
+```bash
+npm run start
+```
 
 ---
 
 ## **Logger Levels**
 
-Control log verbosity using the `LOG_LEVEL` variable in the `.env` file:
+Control verbosity with the `LOG_LEVEL` setting in `.env`:
 
 - **Level 0**: Show all logs (debug, info, warnings, errors).  
 - **Level 1**: Exclude debug logs.  
@@ -174,8 +185,13 @@ Control log verbosity using the `LOG_LEVEL` variable in the `.env` file:
 
 ---
 
-## **License**
+## **Credits & Contributions**
 
-This project is licensed under the MIT License. See the [LICENSE.md](LICENSE.md) file for details.
+This project was initially created by [Tomato6966](https://github.com/Tomato6966).  
+Modified by [kupumalamm](https://github.com/kupumalamm) for custom enhancements.
 
 ---
+
+## **License**
+
+Licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
