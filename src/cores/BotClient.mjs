@@ -68,6 +68,10 @@ export class BotClient extends Client {
     await this.loadCommands();
 
     console.log(`\n${"-=".repeat(40)}-`);
+    this.logger.info(`Loading ContextMenus`);
+    await this.loadContextMenus();
+
+    console.log(`\n${"-=".repeat(40)}-`);
     this.logger.info(`Loading Extenders`);
     await this.loadExtenders();
 
@@ -252,53 +256,65 @@ export class BotClient extends Client {
     return true;
   }
 
-  async loadContextMenu(path = "/src/contextmenu/") {
+  async loadContextMenus(basePath = "/src/contextmenu/") {
     try {
-      const paths = await walks(`${process.cwd()}${path}`);
+      const types = ["user", "message"];
+      let totalCommands = 0;
 
-      if (!paths?.length) {
-        this.logger.debug("No Context Menus found.");
-        return true;
-      }
+      for (const type of types) {
+        const typePath = `${basePath}${type}/`;
+        const paths = await walks(`${process.cwd()}${typePath}`);
 
-      for (const filePath of paths) {
-        try {
-          const command = await import(resolve(filePath)).then((x) => x.default);
+        if (!paths?.length) {
+          this.logger.debug(`No Context Menus found in type: ${type}.`);
+          continue;
+        }
 
-          if (!command.name || typeof command.name !== "string") {
-            this.logger.error(`❌ ${filePath} does not contain a valid Context-Command-Name.`);
-            continue;
-          }
-          if (!command.type || ![2, 3].includes(command.type)) {
-            this.logger.error(`❌ ${filePath} does not contain a valid Context-Command-Type.`);
-            continue;
-          }
+        for (const filePath of paths) {
+          try {
+            const command = await import(resolve(filePath)).then((x) => x.default);
 
-          const builder = new ContextMenuCommandBuilder()
-            .setName(command.name)
-            .setType(command.type);
-
-          if (command.defaultPermissions) {
-            builder.setDefaultMemberPermissions(command.defaultPermissions);
-          }
-
-          if (command.localizations?.length) {
-            for (const [locale, localizedName] of Object.entries(command.localizations)) {
-              builder.setNameLocalization(locale, localizedName);
+            if (!command.name || typeof command.name !== "string") {
+              this.logger.error(`❌ ${filePath} does not contain a valid Context-Command-Name.`);
+              continue;
             }
+
+            const typeValue = command.type || (type === "user" ? 2 : 3);
+
+            if (![2, 3].includes(typeValue)) {
+              this.logger.error(
+                `❌ ${filePath} has an invalid Context-Command-Type (${typeValue}). Expected 2 or 3.`
+              );
+              continue;
+            }
+
+            const builder = new ContextMenuCommandBuilder()
+              .setName(command.name)
+              .setType(typeValue);
+
+            if (command.defaultPermissions) {
+              builder.setDefaultMemberPermissions(command.defaultPermissions);
+            }
+
+            if (command.localizations?.length) {
+              for (const [locale, localizedName] of Object.entries(command.localizations)) {
+                builder.setNameLocalization(locale, localizedName);
+              }
+            }
+
+            command.isContext = true;
+
+            this.logger.debug(`✅ Context Command Loaded (${type}): /${command.name}`);
+            this.commands.set(`contextcmd_${command.name.toLowerCase()}`, command);
+            this.allCommands.push(builder.toJSON());
+            totalCommands++;
+          } catch (err) {
+            this.logger.error(`❌ Failed to load context menu in type: ${type} at ${filePath}: ${err.message}`);
           }
-
-          command.isContext = true;
-
-          this.logger.debug(`✅ Context Command Loaded: /${command.name}`);
-          this.commands.set(`contextcmd_${command.name.toLowerCase()}`, command);
-          this.allCommands.push(builder.toJSON());
-        } catch (err) {
-          this.logger.error(`❌ Failed to load context menu at ${filePath}: ${err.message}`);
         }
       }
 
-      this.logger.info(`✅ Successfully loaded ${this.commands.size} context menus.`);
+      this.logger.info(`✅ Successfully loaded ${totalCommands} context menus.`);
     } catch (err) {
       this.logger.error(`❌ Error loading context menus: ${err.message}`);
     }
