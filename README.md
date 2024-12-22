@@ -185,7 +185,7 @@ Control verbosity with the `LOG_LEVEL` setting in `.env`:
 
 ---
 
-## **Credits & Contributions**
+## **Credits**
 
 This project was initially created by [Tomato6966](https://github.com/Tomato6966).  
 Modified by [kupumalamm](https://github.com/kupumalamm) for custom enhancements.
