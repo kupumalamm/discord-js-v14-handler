@@ -14,7 +14,7 @@ export default class Config {
       shardsPerCluster: parseInt(process.env.SHARDING_PER_CLUSTER || "4"),
       mode: process.env.SHARDING_MODE || "process",
     };
-    this.developers = process.env.DEVELOPERS?.split(",") || [];
+    this.developers = process.env.DEVELOPERS?.split(",") || [""];
     this.log = {
       level: parseInt(process.env.LOG_LEVEL || "0"),
       prefix: process.env.LOG_PREFIX || "INFO-LOG",
